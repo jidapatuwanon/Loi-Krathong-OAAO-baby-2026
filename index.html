@@ -509,7 +509,41 @@ function displayKrathongs(krathongs) {
 }
 // 5. เริ่มต้นเว็บไซต์
 loadKrathongs();
+function displayKrathongs(krathongs) {
+    const container = document.getElementById('krathong-container');
+    if (!container) return;
+    
+    container.innerHTML = ''; 
 
+    krathongs.forEach((item) => {
+        const krathongDiv = document.createElement('div');
+        krathongDiv.className = 'floating-krathong';
+        
+        const randomTop = Math.random() * 70 + 15; 
+        const randomDuration = Math.random() * 10 + 10; 
+        const randomDelay = Math.random() * 5; 
+
+        krathongDiv.style.top = `${randomTop}%`;
+        krathongDiv.style.animationDuration = `${randomDuration}s`;
+        krathongDiv.style.animationDelay = `${randomDelay}s`;
+
+        let krathongIcon = '🪷';
+        if (item.krathong_type === 'กระทงดอกไม้') krathongIcon = '🌸';
+        if (item.krathong_type === 'กระทงใบตอง') krathongIcon = '🍃';
+
+        krathongDiv.innerHTML = `
+            <div class="krathong-icon-wrapper">
+                <span class="krathong-emoji">${krathongIcon}</span>
+                <div class="krathong-bubble">
+                    <span class="k-name">คุณ ${item.name || 'ไม่ระบุชื่อ'}</span>
+                    <span class="k-wish">"${item.wish || ''}"</span>
+                </div>
+            </div>
+        `;
+
+        container.appendChild(krathongDiv);
+    });
+}
 </script>
 
 </body>
