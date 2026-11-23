@@ -1,0 +1,309 @@
+
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ลอยกระทงออนไลน์ | OAAObaby 2026</title>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: sans-serif;
+  color: #fff;
+  background: linear-gradient(#152e50, #254c70, #101d35);
+  min-height: 100vh;
+  text-align: center;
+}
+
+header {
+  padding: 45px 15px 20px;
+}
+
+h1 {
+  font-size: 32px;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  color: #e4d6ad;
+  line-height: 1.8;
+}
+
+.container {
+  max-width: 650px;
+  margin: auto;
+  padding: 15px;
+}
+
+.panel {
+  background: rgba(255,255,255,0.12);
+  padding: 22px;
+  border-radius: 18px;
+  margin: 20px 0;
+  backdrop-filter: blur(8px);
+}
+
+input, textarea, select {
+  width: 100%;
+  padding: 13px;
+  margin: 8px 0;
+  border: none;
+  border-radius: 10px;
+  font-size: 15px;
+}
+
+textarea {
+  height: 90px;
+  resize: vertical;
+}
+
+button {
+  background: #e5bb70;
+  color: #25354c;
+  border: none;
+  padding: 13px 25px;
+  border-radius: 25px;
+  font-size: 16px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+button:disabled {
+  opacity: .5;
+}
+
+#river {
+  position: relative;
+  height: 400px;
+  overflow: hidden;
+  border-radius: 18px;
+  background: linear-gradient(#244e72, #102b49);
+  margin-top: 20px;
+}
+
+.krathong {
+  position: absolute;
+  font-size: 42px;
+  cursor: pointer;
+  animation: float 5s ease-in-out infinite alternate;
+  filter: drop-shadow(0 0 10px #ffd88a);
+}
+
+@keyframes float {
+  from { transform: translateY(0) rotate(-5deg); }
+  to { transform: translateY(-18px) rotate(5deg); }
+}
+
+.wish-card {
+  background: rgba(255,255,255,.13);
+  border-radius: 12px;
+  padding: 15px;
+  margin: 10px 0;
+  text-align: left;
+  line-height: 1.7;
+}
+
+.wish-card strong {
+  color: #f6d38b;
+}
+
+#status {
+  margin: 12px 0;
+  font-size: 14px;
+}
+
+footer {
+  padding: 30px 10px;
+  color: #d8c9a7;
+  font-size: 13px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>🪷 ลอยกระทงออนไลน์ 🪷</h1>
+  <div class="subtitle">
+    OAAObaby Loy Krathong Festival 2026<br>
+    ส่งความสุข ปล่อยความทุกข์ และร่วมอธิษฐานไปด้วยกัน
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="panel">
+    <h2>🌕 สร้างกระทงของคุณ</h2>
+
+    <input id="name" type="text"
+      placeholder="ชื่อของคุณ (หรือชื่อเล่น)" maxlength="40">
+
+    <textarea id="wish"
+      placeholder="เขียนคำอธิษฐานของคุณที่นี่..."
+      maxlength="300"></textarea>
+
+    <select id="type">
+      <option value="🌸">🌸 กระทงดอกไม้</option>
+      <option value="🪷">🪷 กระทงดอกบัว</option>
+      <option value="🌼">🌼 กระทงดอกดาวเรือง</option>
+      <option value="🌺">🌺 กระทงดอกไม้หลากสี</option>
+    </select>
+
+    <button id="submitBtn" onclick="createKrathong()">
+      🪷 ลอยกระทง
+    </button>
+
+    <div id="status"></div>
+  </div>
+
+  <div class="panel">
+    <h2>🌊 กระทงแห่งคำอธิษฐาน</h2>
+    <p>กระทงของทุกคนกำลังลอยไปด้วยกัน</p>
+    <div id="river"></div>
+    <p id="total">กำลังโหลดกระทง...</p>
+  </div>
+
+  <div class="panel">
+    <h2>💌 คำอธิษฐานจากทุกครอบครัว</h2>
+    <div id="wishes"></div>
+  </div>
+
+</div>
+
+<footer>
+  With Love from OAAObaby Family 🤍<br>
+  Happy Loy Krathong Festival 2026
+</footer>
+
+<script>
+
+// 1. ตั้งค่า Supabase
+const SUPABASE_URL = "ใส่_PROJECT_URL_ตรงนี้";
+const SUPABASE_KEY = "ใส่_PUBLISHABLE_KEY_ตรงนี้";
+
+const db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_KEY
+);
+
+// 2. โหลดข้อมูลกระทงทั้งหมด
+async function loadKrathongs() {
+
+  const { data, error } = await db
+    .from('krathongs')
+    .select('id,name,wish,krathong_type,created_at')
+    .order('created_at', { ascending: false });
+
+  if (error) {
+    document.getElementById('total').innerText =
+      'ไม่สามารถโหลดข้อมูลได้ กรุณาตรวจสอบการเชื่อมต่อ';
+    console.error(error);
+    return;
+  }
+
+  showKrathongs(data);
+}
+
+// 3. แสดงกระทงและคำอธิษฐาน
+function showKrathongs(data) {
+
+  const river = document.getElementById('river');
+  const wishes = document.getElementById('wishes');
+
+  river.innerHTML = '';
+  wishes.innerHTML = '';
+
+  document.getElementById('total').innerText =
+    '🪷 มีกระทงทั้งหมด ' + data.length + ' กระทง';
+
+  data.forEach((item, index) => {
+
+    const krathong = document.createElement('div');
+    krathong.className = 'krathong';
+    krathong.innerText = item.krathong_type || '🪷';
+
+    krathong.style.left =
+      (5 + Math.random() * 85) + '%';
+
+    krathong.style.top =
+      (10 + Math.random() * 75) + '%';
+
+    krathong.style.animationDelay =
+      (Math.random() * 3) + 's';
+
+    krathong.title = item.name + ': ' + item.wish;
+
+    river.appendChild(krathong);
+
+    const card = document.createElement('div');
+    card.className = 'wish-card';
+
+    const name = document.createElement('strong');
+    name.textContent = '🪷 ' + (item.name || 'ไม่ระบุชื่อ');
+
+    const wish = document.createElement('div');
+    wish.textContent = item.wish || '';
+
+    card.appendChild(name);
+    card.appendChild(wish);
+
+    wishes.appendChild(card);
+  });
+
+}
+
+// 4. สร้างกระทงใหม่
+async function createKrathong() {
+
+  const name = document.getElementById('name').value.trim();
+  const wish = document.getElementById('wish').value.trim();
+  const type = document.getElementById('type').value;
+  const status = document.getElementById('status');
+  const btn = document.getElementById('submitBtn');
+
+  if (!name || !wish) {
+    status.innerText = 'กรุณากรอกชื่อและคำอธิษฐานก่อนนะคะ 🪷';
+    return;
+  }
+
+  btn.disabled = true;
+  status.innerText = 'กำลังส่งกระทงของคุณลงสู่สายน้ำ...';
+
+  const { error } = await db
+    .from('krathongs')
+    .insert([{
+      name: name,
+      wish: wish,
+      krathong_type: type
+    }]);
+
+  btn.disabled = false;
+
+  if (error) {
+    status.innerText = 'ส่งกระทงไม่สำเร็จ กรุณาลองอีกครั้ง';
+    console.error(error);
+    return;
+  }
+
+  status.innerText = '🪷 กระทงของคุณลอยสู่สายน้ำแล้ว!';
+
+  document.getElementById('name').value = '';
+  document.getElementById('wish').value = '';
+
+  await loadKrathongs();
+}
+
+// 5. เริ่มต้นเว็บไซต์
+loadKrathongs();
+
+</script>
+
+</body>
+</html>
